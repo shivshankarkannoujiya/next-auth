@@ -31,6 +31,16 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (!user.isVerified) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: 'Please verify your email',
+                },
+                { status: 400 }
+            );
+        }
+
         const token = jwt.sign(
             {
                 id: user._id,
