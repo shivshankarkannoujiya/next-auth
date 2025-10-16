@@ -1,0 +1,13 @@
+# Ignore build directories
+build/
+dist/
+
+# Ignore node modules
+node_modules/
+
+# Ignore log files
+*.log
+
+# Ignore configuration files
+.env
+.DS_Store

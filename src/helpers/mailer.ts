@@ -1,61 +1,65 @@
-import User from "../models/user.model";
-import nodemailer from "nodemailer";
-import bcrypt from "bcryptjs";
+import User from '../models/user.model';
+import nodemailer from 'nodemailer';
+import bcrypt from 'bcryptjs';
 
-type EmailType = "VERIFY" | "RESET";
+type EmailType = 'VERIFY' | 'RESET';
 interface MailParams {
-  email: string;
-  emailType: EmailType;
-  userId: string;
+    email: string;
+    emailType: EmailType;
+    userId: string;
 }
 
 const EMAILTYPE = {
-  VERIFY: "VERIFY",
-  RESET: "RESET",
+    VERIFY: 'VERIFY',
+    RESET: 'RESET',
 };
 
 export const sendEmail = async ({ email, emailType, userId }: MailParams) => {
-  try {
-    const hashedToken = await bcrypt.hash(userId.toString(), 10);
+    try {
+        const hashedToken = await bcrypt.hash(userId.toString(), 10);
 
-    if (emailType === EMAILTYPE.VERIFY) {
-      await User.findByIdAndUpdate(userId, {
-        verifyToken: hashedToken,
-        verifyTokenExpiry: Date.now() + 3600000,
-      });
-    } else if (emailType === EMAILTYPE.RESET) {
-      await User.findByIdAndUpdate(userId, {
-        forgotPasswordToken: hashedToken,
-        forgotPasswordTokenExpiry: Date.now() + +3600000,
-      });
-    }
+        if (emailType === EMAILTYPE.VERIFY) {
+            await User.findByIdAndUpdate(userId, {
+                verifyToken: hashedToken,
+                verifyTokenExpiry: Date.now() + 3600000,
+            });
+        } else if (emailType === EMAILTYPE.RESET) {
+            await User.findByIdAndUpdate(userId, {
+                forgotPasswordToken: hashedToken,
+                forgotPasswordTokenExpiry: Date.now() + +3600000,
+            });
+        }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.MAILTRAP_HOST,
-      port: Number(process.env.MAILTRAP_PORT),
-      auth: {
-        user: process.env.MAILTRAP_USERNAME,
-        pass: process.env.MAILTRAP_PASSWORD,
-      },
-    });
+        const transporter = nodemailer.createTransport({
+            host: process.env.MAILTRAP_HOST,
+            port: Number(process.env.MAILTRAP_PORT),
+            auth: {
+                user: process.env.MAILTRAP_USERNAME,
+                pass: process.env.MAILTRAP_PASSWORD,
+            },
+        });
 
-    const mailOptions = {
-      from: "abhi@google.com",
-      to: email,
-      subject:
-        emailType === "VERIFY" ? "Verify your email" : "Reset your password",
-      html: `<p>Click <a href="${
-        process.env.DOMAIN
-      }/verifyemail?token=${hashedToken}">here</a> to ${
-        emailType === "VERIFY" ? "verify your email" : "reset your password"
-      } or copy and paste the link below in your browser.<br>
+        const mailOptions = {
+            from: 'abhi@google.com',
+            to: email,
+            subject:
+                emailType === 'VERIFY'
+                    ? 'Verify your email'
+                    : 'Reset your password',
+            html: `<p>Click <a href="${
+                process.env.DOMAIN
+            }/verifyemail?token=${hashedToken}">here</a> to ${
+                emailType === 'VERIFY'
+                    ? 'verify your email'
+                    : 'reset your password'
+            } or copy and paste the link below in your browser.<br>
              ${process.env.DOMAIN}/verifyemail?token=${hashedToken}
             </p>`,
-    };
+        };
 
-    const mailResponse = await transporter.sendMail(mailOptions);
-    return mailResponse;
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to send email");
-  }
+        const mailResponse = await transporter.sendMail(mailOptions);
+        return mailResponse;
+    } catch (error: any) {
+        throw new Error(error.message || 'Failed to send email');
+    }
 };
